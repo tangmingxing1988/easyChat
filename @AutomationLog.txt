@@ -1,0 +1,19 @@
+2023-10-27 17:13:57.569 ui_auto_wechat.py[24] click -> Find Control Timeout(10s): {Name: '图片与视频', Depth: 6, ControlType: TabItemControl}
+UIAutomation 2.0.17 (Python 3.10.11, 64 bit)
+2023-10-27 17:47:47.961 automation.py[79] main -> Starts, Current Cursor Position: (965, 928)
+ControlType: PaneControl    ClassName: #32769    AutomationId:     Rect: (0,0,2560,1080)[2560x1080]    Name: '桌面 1'    Handle: 0x10010(65552)    Depth: 0    SupportedPattern: LegacyIAccessiblePattern
+    ControlType: PaneControl    ClassName: Chrome_WidgetWin_1    AutomationId:     Rect: (-8,-8,2568,1040)[2576x1048]    Name: 'ui_auto_wechat.py - easyChat - Visual Studio Code [Administrator]'    Handle: 0x40C06(265222)    Depth: 1    SupportedPattern: LegacyIAccessiblePattern ScrollItemPattern TransformPattern WindowPattern
+        ControlType: DocumentControl    ClassName: Chrome_RenderWidgetHostHWND    AutomationId: 11920192    Rect: (0,0,2560,1032)[2560x1032]    Name: ''    Handle: 0x150A70(1378928)    Depth: 2    ScrollPattern.HorizontalScrollPercent: 0.0    ScrollPattern.VerticalScrollPercent: 0.0    TextPattern.Text: ''    SupportedPattern: LegacyIAccessiblePattern ScrollItemPattern ScrollPattern TextPattern TextPattern2
+        ControlType: PaneControl    ClassName: Intermediate D3D Window    AutomationId:     Rect: (0,0,2560,1032)[2560x1032]    Name: ''    Handle: 0xD70C52(14093394)    Depth: 2    SupportedPattern: LegacyIAccessiblePattern
+        ControlType: TitleBarControl    ClassName:     AutomationId:     Rect: (0,-5,2560,0)[2560x5]    Name: ''    Handle: 0x0(0)    Depth: 2    ValuePattern.Value: 'ui_auto_wechat.py - easyChat - Visual Studio Code [Administrator]'    SupportedPattern: LegacyIAccessiblePattern ValuePattern
+        ControlType: PaneControl    ClassName:     AutomationId:     Rect: (0,0,2560,1032)[2560x1032]    Name: ''    Handle: 0x0(0)    Depth: 2    SupportedPattern: LegacyIAccessiblePattern ScrollItemPattern
+            ControlType: PaneControl    ClassName:     AutomationId:     Rect: (0,0,2560,1032)[2560x1032]    Name: ''    Handle: 0x0(0)    Depth: 3    SupportedPattern: LegacyIAccessiblePattern ScrollItemPattern
+                ControlType: PaneControl    ClassName:     AutomationId:     Rect: (2423,0,2560,34)[137x34]    Name: ''    Handle: 0x0(0)    Depth: 4    SupportedPattern: LegacyIAccessiblePattern ScrollItemPattern
+                    ControlType: ButtonControl    ClassName:     AutomationId:     Rect: (2423,0,2468,34)[45x34]    Name: 'Minimize'    Handle: 0x0(0)    Depth: 5    SupportedPattern: InvokePattern LegacyIAccessiblePattern ScrollItemPattern
+                    ControlType: ButtonControl    ClassName:     AutomationId:     Rect: (2468,0,2514,34)[46x34]    Name: 'Restore'    Handle: 0x0(0)    Depth: 5    SupportedPattern: InvokePattern LegacyIAccessiblePattern ScrollItemPattern
+                    ControlType: ButtonControl    ClassName:     AutomationId:     Rect: (2514,0,2560,34)[46x34]    Name: 'Close'    Handle: 0x0(0)    Depth: 5    SupportedPattern: InvokePattern LegacyIAccessiblePattern ScrollItemPattern
+                ControlType: PaneControl    ClassName:     AutomationId:     Rect: (0,0,2560,1032)[2560x1032]    Name: ''    Handle: 0x0(0)    Depth: 4    SupportedPattern: LegacyIAccessiblePattern ScrollItemPattern
+                    ControlType: PaneControl    ClassName:     AutomationId:     Rect: (0,0,2560,1032)[2560x1032]    Name: ''    Handle: 0x0(0)    Depth: 5    SupportedPattern: LegacyIAccessiblePattern ScrollItemPattern
+                        ControlType: PaneControl    ClassName:     AutomationId:     Rect: (0,0,2560,1032)[2560x1032]    Name: ''    Handle: 0x0(0)    Depth: 6    SupportedPattern: LegacyIAccessiblePattern ScrollItemPattern
+2023-10-27 17:47:48.240 automation.py[114] main -> Ends
+

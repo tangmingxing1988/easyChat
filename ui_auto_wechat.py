@@ -307,6 +307,25 @@ class WeChat:
             # 如果无法上滑则退出
             if ori_cnt == cnt:
                 break
+
+    # 获取当前聊天窗口的聊天记录
+    def get_current_contents(self) -> List:
+        list_control = auto.ListControl(Name="消息")
+        print(len(list_control.GetChildren()))
+        
+        dialogs = []
+        value_to_info = {0: '用户发送', 1: '时间信息', 2: '红包信息', 3: '"查看更多消息"标志', 4: '撤回消息'}
+
+        for list_item_control in list_control.GetChildren()[::-1]:
+            v = self._detect_type(list_item_control)
+            msg = list_item_control.Name
+            name = list_item_control.ButtonControl().Name if v == 0 else ''
+            
+            dialogs.append((value_to_info[v], name, msg))
+            
+        # 将聊天记录列表翻转
+        dialogs = dialogs[::-1]
+        return dialogs
             
     # 获取指定聊天窗口的聊天记录
     def get_dialogs(self, name: str, n_msg: int) -> List:
@@ -356,7 +375,7 @@ class WeChat:
 
 
 if __name__ == '__main__':
-    wechat_path = "D:\Program Files (x86)\Tencent\WeChat\WeChat.exe"
+    wechat_path = "C:\Program Files\Tencent\WeChat\WeChat.exe"
     wechat = WeChat(wechat_path)
     
     name = "文件传输助手"
@@ -365,6 +384,7 @@ if __name__ == '__main__':
     
     # wechat.send_msg(name, text)
     # wechat.send_file(name, file)
+    print(len(wechat.get_current_contents()))
     
     # contacts = wechat.find_all_contacts()
     # print(len(contacts))
@@ -373,4 +393,4 @@ if __name__ == '__main__':
     # for i in res:
     #     print(i)
     
-    wechat.save_dialog_pictures("xx", 15, "C:/Users/LTEnj/Desktop/")
+    # wechat.save_dialog_pictures("xx", 15, "C:/Users/LTEnj/Desktop/")
