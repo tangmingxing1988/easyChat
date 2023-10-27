@@ -12,6 +12,7 @@ from clipboard import setClipboardFiles
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtCore import QMimeData, QUrl
 from typing import List
+from urllib.parse import quote
 
 
 # 鼠标移动到控件上
@@ -86,9 +87,22 @@ class WeChat:
             address = response_data.get("data", {}).get("address")
 
             if address:
-                return address
+                # 拼接URL模板
+                marker_template = "coord:{},{};title:{};addr:{}"
+                latitude = response_data.get("data", {}).get("latitude")
+                longitude = response_data.get("data", {}).get("longitude")
+                title = "夏维英"
+                marker = quote(marker_template.format(latitude, longitude, title, address))
+                api_key = quote("4C7BZ-OMMKT-CN7XP-VQOGV-U7CFO-I7F5B")
+                
+                url_template = "https://apis.map.qq.com/tools/poimarker?type=0&marker={}&key={}&referer=myapp"
+
+                # 使用format方法将参数填入模板
+                tencent_map_url = url_template.format(marker, api_key)
+
+                return f"我在【{address}】，具体是：{tencent_map_url}"
             
-        return "找不到地址"
+        return "我在火星，别来烦我"
 
     # 打开微信客户端
     def open_wechat(self):
@@ -432,7 +446,7 @@ if __name__ == '__main__':
                         break
                     elif msg[0] == '用户发送' and msg[1] != '夏维英' and '妈' in msg[2] and '哪' in msg[2]:
                         print('请求位置')
-                        wechat.direct_reply(f"我在: 【{wechat.get_location()}】")
+                        wechat.direct_reply(wechat.get_location())
                         break
 
             else:
