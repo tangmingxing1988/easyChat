@@ -5,6 +5,7 @@ import numpy as np
 import pyperclip
 import os
 import pyautogui
+import requests
 
 from PIL import ImageGrab
 from clipboard import setClipboardFiles
@@ -63,6 +64,32 @@ class WeChat:
         # 自动回复的内容
         self.auto_reply_msg = "[自动回复]您好，我现在正在忙，稍后会主动联系您，感谢理解。"
         
+
+    def get_location(self):
+        # 定义请求的URL和请求体数据
+        url = "http://o.hupai.vip:9999/location/query"
+        data = {
+            "data": {},
+            "timestamp": 1652590258638,
+            "sign": ""
+        }
+
+        # 发送POST请求
+        response = requests.post(url, json=data)
+
+        # 检查响应状态码是否为200
+        if response.status_code == 200:
+            # 解析响应的JSON数据
+            response_data = response.json()
+
+            # 获取address字段
+            address = response_data.get("data", {}).get("address")
+
+            if address:
+                return address
+            
+        return "找不到地址"
+
     # 打开微信客户端
     def open_wechat(self):
         subprocess.Popen(self.path)
@@ -214,7 +241,15 @@ class WeChat:
         pyperclip.copy(text)
         auto.SendKeys("{Ctrl}v")
         self.press_enter()
-    
+
+    def direct_reply(self, text):
+        print(text)
+        pyperclip.copy(text)
+        time.sleep(0.5)
+        auto.SendKeys("{Ctrl}v")
+        time.sleep(0.5)
+        self.press_enter()
+
     # 识别聊天内容的类型
     # 0：用户发送    1：时间信息  2：红包信息  3：”查看更多消息“标志 4：撤回消息
     def _detect_type(self, list_item_control: auto.ListItemControl) -> int:
@@ -240,6 +275,9 @@ class WeChat:
             # 或者是撤回消息
             elif "撤回了一条消息" in list_item_control.Name:
                 value = 4
+            # 分割线
+            elif "以下为新消息" in list_item_control.Name:
+                value = 5
                 
         if value is None:
             raise ValueError("无法识别该控件类型")
@@ -311,10 +349,9 @@ class WeChat:
     # 获取当前聊天窗口的聊天记录
     def get_current_contents(self) -> List:
         list_control = auto.ListControl(Depth=12, Name="消息")
-        print(len(list_control.GetChildren()))
         
         dialogs = []
-        value_to_info = {0: '用户发送', 1: '时间信息', 2: '红包信息', 3: '"查看更多消息"标志', 4: '撤回消息'}
+        value_to_info = {0: '用户发送', 1: '时间信息', 2: '红包信息', 3: '"查看更多消息"标志', 4: '撤回消息', 5: '新消息分割'}
 
         for list_item_control in list_control.GetChildren()[::-1]:
             v = self._detect_type(list_item_control)
@@ -323,8 +360,6 @@ class WeChat:
             
             dialogs.append((value_to_info[v], name, msg))
             
-        # 将聊天记录列表翻转
-        dialogs = dialogs[::-1]
         return dialogs
             
     # 获取指定聊天窗口的聊天记录
@@ -384,9 +419,25 @@ if __name__ == '__main__':
     
     # wechat.send_msg(name, text)
     # wechat.send_file(name, file)
-    dialogs = wechat.get_current_contents()
-    for msg in dialogs:
-        print(msg)
+    latest_message = ''
+    while True:
+        dialogs = wechat.get_current_contents()
+        if len(dialogs) > 0:
+            if dialogs[0][2] != latest_message:
+                print('收到新消息')
+                latest_message = dialogs[0][2]
+                for msg in dialogs:
+                    if msg[0] == '用户发送' and msg[1] == '夏维英' and '我在' in msg[2]:
+                        print('位置已发送')
+                        break
+                    elif msg[0] == '用户发送' and msg[1] != '夏维英' and '妈' in msg[2] and '哪' in msg[2]:
+                        print('请求位置')
+                        wechat.direct_reply(f"我在: 【{wechat.get_location()}】")
+                        break
+
+            else:
+                print('消息没变化')
+        time.sleep(1)
     
     # contacts = wechat.find_all_contacts()
     # print(len(contacts))
