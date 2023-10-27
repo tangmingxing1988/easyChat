@@ -310,7 +310,7 @@ class WeChat:
 
     # 获取当前聊天窗口的聊天记录
     def get_current_contents(self) -> List:
-        list_control = auto.ListControl(Name="消息")
+        list_control = auto.ListControl(Depth=12, Name="消息")
         print(len(list_control.GetChildren()))
         
         dialogs = []
@@ -384,7 +384,9 @@ if __name__ == '__main__':
     
     # wechat.send_msg(name, text)
     # wechat.send_file(name, file)
-    print(len(wechat.get_current_contents()))
+    dialogs = wechat.get_current_contents()
+    for msg in dialogs:
+        print(msg)
     
     # contacts = wechat.find_all_contacts()
     # print(len(contacts))
