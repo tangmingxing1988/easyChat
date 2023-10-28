@@ -67,6 +67,7 @@ def from_destination():
         if response.status_code == 200:
             # 解析JSON响应
             data = response.json()
+            print(data)
             
             # 提取distance和duration的值
             if data['status'] == 0:
@@ -538,6 +539,10 @@ if __name__ == '__main__':
     # 创建并启动HTTP服务器线程
     http_server_thread = threading.Thread(target=start_http_server)
     http_server_thread.start()
+
+    # print(wechat.get_location())
+    # time.sleep(1000)
+
     # name = "文件传输助手"
     # text = "你好"
     # file = "C:/Users/Dell/Pictures/takagi.jpeg"
