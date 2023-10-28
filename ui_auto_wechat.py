@@ -539,8 +539,8 @@ if __name__ == '__main__':
     http_server_thread = threading.Thread(target=start_http_server)
     http_server_thread.start()
 
-    print(wechat.get_location())
-    time.sleep(1000)
+    # print(wechat.get_location())
+    # time.sleep(1000)
 
     # name = "文件传输助手"
     # text = "你好"
