@@ -91,7 +91,24 @@ def double_click(element):
 # 聊天记录界面的图片按钮              Name: '图片与视频'     ControlType: TabItemControl      depth: 6
 # 聊天记录复制图片按钮               Name: '复制'   ControlType: MenuItemControl      depth: 5
 
+def translate_location(latitude, longitude):
+    url = "https://apis.map.qq.com/ws/coord/v1/translate?key=4C7BZ-OMMKT-CN7XP-VQOGV-U7CFO-I7F5B&locations={},{}&type=1".format(latitude, longitude)
+    # 发送GET请求
+    response = requests.get(url)
 
+    # 检查响应状态码
+    if response.status_code == 200:
+        # 解析JSON响应
+        data = response.json()
+        
+        # 提取lng和lat的值
+        lng = data["locations"][0]["lng"]
+        lat = data["locations"][0]["lat"]
+
+        return "{},{}".format(lat, lng)
+    else:
+        return "{},{}".format(latitude, longitude)
+    
 class WeChat:
     def __init__(self, path):
         # 微信打开路径
@@ -129,11 +146,11 @@ class WeChat:
 
             if address:
                 # 拼接URL模板
-                marker_template = "coord:{},{};title:{};addr:{}"
+                marker_template = "coord:{};title:{};addr:{}"
                 latitude = response_data.get("data", {}).get("latitude")
                 longitude = response_data.get("data", {}).get("longitude")
                 title = "夏维英"
-                marker = quote(marker_template.format(latitude, longitude, title, address))
+                marker = quote(marker_template.format(translate_location(latitude, longitude), title, address))
                 api_key = quote("4C7BZ-OMMKT-CN7XP-VQOGV-U7CFO-I7F5B")
                 
                 url_template = "https://apis.map.qq.com/tools/poimarker?type=0&marker={}&key={}&referer=myapp"
