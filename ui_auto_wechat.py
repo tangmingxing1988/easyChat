@@ -102,12 +102,12 @@ def translate_location(latitude, longitude):
         data = response.json()
         
         # 提取lng和lat的值
-        lng = data["locations"][0]["lng"]
-        lat = data["locations"][0]["lat"]
-
-        return "{},{}".format(lat, lng)
-    else:
-        return "{},{}".format(latitude, longitude)
+        if data['status'] == 0:
+            lng = data["locations"][0]["lng"]
+            lat = data["locations"][0]["lat"]
+            return "{},{}".format(lat, lng)
+        
+    return "{},{}".format(latitude, longitude)
     
 class WeChat:
     def __init__(self, path):
