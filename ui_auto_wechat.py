@@ -90,6 +90,7 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
             
             url_template = "https://apis.map.qq.com/tools/poimarker?type=0&marker={}&key=4C7BZ-OMMKT-CN7XP-VQOGV-U7CFO-I7F5B&referer=myapp"
             self.send_header("Location", url_template.format(marker))
+            print(url_template.format(marker))
             self.end_headers()
 
     def do_POST(self):
