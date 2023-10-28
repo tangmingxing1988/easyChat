@@ -46,7 +46,8 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
             # 获取第二行（索引为 1）
             if len(lines) > 1:
                 second_line = lines[1]
-                my_queue.put(f"{second_line}(来自{received_from})")
+                received_from = f"(来自{received_from})" if len(received_from) <= 11 else ''
+                my_queue.put(f"{second_line}{received_from}")
             else:
                 print("字符串中没有第二行。")
 
