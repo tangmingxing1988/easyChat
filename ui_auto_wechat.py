@@ -108,7 +108,7 @@ class WeChat:
 
     def get_location(self):
         # 定义请求的URL和请求体数据
-        url = "http://o.hupai.vip:9999/location/query"
+        url = "http://x.hupai.vip:9999/location/query"
         data = {
             "data": {},
             "timestamp": 1652590258638,
