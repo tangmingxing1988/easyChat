@@ -6,6 +6,9 @@ import pyperclip
 import os
 import pyautogui
 import requests
+import http.server
+import socketserver
+import threading
 
 from PIL import ImageGrab
 from clipboard import setClipboardFiles
@@ -13,7 +16,39 @@ from PyQt5.QtWidgets import QApplication
 from PyQt5.QtCore import QMimeData, QUrl
 from typing import List
 from urllib.parse import quote
+from urllib.parse import parse_qs
 
+current_location = ''
+
+class MyHandler(http.server.SimpleHTTPRequestHandler):
+    def do_GET(self):
+        if self.path == "/location":
+            self.send_response(302)
+            self.send_header("Location", current_location)
+            self.end_headers()
+        else:
+            super().do_GET()
+
+    def do_POST(self):
+        if self.path == "/push":
+            content_length = int(self.headers["Content-Length"])
+            post_data = self.rfile.read(content_length).decode("utf-8")
+            post_params = parse_qs(post_data)
+
+            if "from" in post_params and "content" in post_params:
+                # 处理接收到的数据，你可以根据需要进行操作
+                received_from = post_params["from"][0]
+                received_content = post_params["content"][0]
+                print("Received from:", received_from)
+                print("Received content:", received_content)
+
+            self.send_response(200)
+            self.send_header("Content-Type", "text/plain")
+            self.end_headers()
+            self.wfile.write("".encode("utf-8"))  # 返回一个空文本
+
+        else:
+            super().do_POST()
 
 # 鼠标移动到控件上
 def move(element):
@@ -98,9 +133,10 @@ class WeChat:
                 url_template = "https://apis.map.qq.com/tools/poimarker?type=0&marker={}&key={}&referer=myapp"
 
                 # 使用format方法将参数填入模板
-                tencent_map_url = url_template.format(marker, api_key)
+                global current_location
+                current_location= url_template.format(marker, api_key)
 
-                return f"我在【{address}】，具体是：{tencent_map_url}"
+                return f"我在【{address}】，具体是：http://x.hupai.vip:8080/location"
             
         return "我在火星，别来烦我"
 
@@ -292,9 +328,11 @@ class WeChat:
             # 分割线
             elif "以下为新消息" in list_item_control.Name:
                 value = 5
+            elif "邀请你加入了群聊" in list_item_control.Name:
+                value = 6
                 
         if value is None:
-            raise ValueError("无法识别该控件类型")
+            value = 7
         
         return value
     
@@ -365,7 +403,7 @@ class WeChat:
         list_control = auto.ListControl(Depth=12, Name="消息")
         
         dialogs = []
-        value_to_info = {0: '用户发送', 1: '时间信息', 2: '红包信息', 3: '"查看更多消息"标志', 4: '撤回消息', 5: '新消息分割'}
+        value_to_info = {0: '用户发送', 1: '时间信息', 2: '红包信息', 3: '"查看更多消息"标志', 4: '撤回消息', 5: '新消息分割', 6: '邀请进群', 7: '其他'}
 
         for list_item_control in list_control.GetChildren()[::-1]:
             v = self._detect_type(list_item_control)
@@ -423,16 +461,28 @@ class WeChat:
         return dialogs
 
 
+def start_http_server():
+    port = 8080
+    with socketserver.TCPServer(("", port), MyHandler) as httpd:
+        print("HTTP server is running at port", port)
+        httpd.serve_forever()
+
 if __name__ == '__main__':
     wechat_path = "C:\Program Files\Tencent\WeChat\WeChat.exe"
     wechat = WeChat(wechat_path)
     
-    name = "文件传输助手"
-    text = "你好"
-    file = "C:/Users/Dell/Pictures/takagi.jpeg"
+    # 监听消息
+        
+    # 创建并启动HTTP服务器线程
+    http_server_thread = threading.Thread(target=start_http_server)
+    http_server_thread.start()
+    # name = "文件传输助手"
+    # text = "你好"
+    # file = "C:/Users/Dell/Pictures/takagi.jpeg"
     
     # wechat.send_msg(name, text)
     # wechat.send_file(name, file)
+    print('开始使用微信')
     latest_message = ''
     while True:
         dialogs = wechat.get_current_contents()
