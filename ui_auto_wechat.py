@@ -9,6 +9,7 @@ import requests
 import http.server
 import socketserver
 import threading
+import queue
 
 from PIL import ImageGrab
 from clipboard import setClipboardFiles
@@ -19,6 +20,7 @@ from urllib.parse import quote
 from urllib.parse import parse_qs
 
 current_location = ''
+my_queue = queue.Queue()
 
 class MyHandler(http.server.SimpleHTTPRequestHandler):
     def do_GET(self):
@@ -26,35 +28,38 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
             self.send_response(302)
             self.send_header("Location", current_location)
             self.end_headers()
-        else:
-            super().do_GET()
 
     def do_POST(self):
-        if self.path == "/push":
-            content_length = int(self.headers["Content-Length"])
-            post_data = self.rfile.read(content_length).decode("utf-8")
-            post_params = parse_qs(post_data)
+        content_length = int(self.headers["Content-Length"])
+        post_data = self.rfile.read(content_length).decode("utf-8")
+        post_params = parse_qs(post_data)
 
-            if "from" in post_params and "content" in post_params:
-                # 处理接收到的数据，你可以根据需要进行操作
-                received_from = post_params["from"][0]
-                received_content = post_params["content"][0]
-                print("Received from:", received_from)
-                print("Received content:", received_content)
+        if "from" in post_params and "content" in post_params:
+            # 处理接收到的数据，你可以根据需要进行操作
+            received_from = post_params["from"][0]
+            received_content = post_params["content"][0]
+            print("Received from:", received_from)
+            print("Received content:", received_content)
+            # 使用 splitlines() 方法将字符串分割成行
+            lines = received_content.splitlines()
 
-            self.send_response(200)
-            self.send_header("Content-Type", "text/plain")
-            self.end_headers()
-            self.wfile.write("".encode("utf-8"))  # 返回一个空文本
+            # 获取第二行（索引为 1）
+            if len(lines) > 1:
+                second_line = lines[1]
+                my_queue.put(f"我收到了一条来自【{received_from}】的短信：{second_line}")
+            else:
+                print("字符串中没有第二行。")
 
-        else:
-            super().do_POST()
+
+        self.send_response(200)
+        self.send_header("Content-Type", "text/plain")
+        self.end_headers()
+        self.wfile.write("".encode("utf-8"))  # 返回一个空文本
 
 # 鼠标移动到控件上
 def move(element):
     x, y = element.GetPosition()
     auto.SetCursorPos(x, y)
-
 
 # 鼠标快速点击控件
 def click(element):
@@ -501,6 +506,11 @@ if __name__ == '__main__':
 
             else:
                 print('消息没变化')
+        try:
+            item = my_queue.get_nowait()
+            wechat.direct_reply(item)
+        except queue.Empty:
+            print("队列为空，无法获取元素。")
         time.sleep(1)
     
     # contacts = wechat.find_all_contacts()
