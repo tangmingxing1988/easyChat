@@ -67,7 +67,6 @@ def from_destination():
         if response.status_code == 200:
             # 解析JSON响应
             data = response.json()
-            print(data)
             
             # 提取distance和duration的值
             if data['status'] == 0:
@@ -88,9 +87,8 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
             marker_template = "coord:{};title:夏维英;addr:{}"
             marker = marker_template.format(location, location_name)
             
-            url_template = "https://apis.map.qq.com/tools/poimarker?type=0&marker={}&key=4C7BZ-OMMKT-CN7XP-VQOGV-U7CFO-I7F5B&referer=myapp"
-            self.send_header("Location", url_template.format(marker))
-            print(url_template.format(marker))
+            url = f"https://apis.map.qq.com/tools/poimarker?type=0&marker={quote(marker)}&key={quote('4C7BZ-OMMKT-CN7XP-VQOGV-U7CFO-I7F5B')}&referer=myapp"
+            self.send_header("Location", url)
             self.end_headers()
 
     def do_POST(self):
@@ -541,8 +539,8 @@ if __name__ == '__main__':
     http_server_thread = threading.Thread(target=start_http_server)
     http_server_thread.start()
 
-    # print(wechat.get_location())
-    # time.sleep(1000)
+    print(wechat.get_location())
+    time.sleep(1000)
 
     # name = "文件传输助手"
     # text = "你好"
