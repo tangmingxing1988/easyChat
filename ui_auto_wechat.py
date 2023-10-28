@@ -19,14 +19,76 @@ from typing import List
 from urllib.parse import quote
 from urllib.parse import parse_qs
 
-current_location = ''
+location = ''
+location_name = ''
+destination = '30.298782,120.183518'
+destination_name = '朗诗乐府'
 my_queue = queue.Queue()
 
+def minutes_to_hours_and_minutes(total_minutes):
+    if total_minutes < 0:
+        return "3分钟"
+    elif total_minutes == 0:
+        return "3分钟"
+
+    hours = total_minutes // 60
+    minutes = total_minutes % 60
+
+    return f"{hours}小时{minutes}分钟"
+
+def translate_location(origin_cood):
+    url = f"https://apis.map.qq.com/ws/coord/v1/translate?key=4C7BZ-OMMKT-CN7XP-VQOGV-U7CFO-I7F5B&locations={origin_cood}&type=1"
+    # 发送GET请求
+    response = requests.get(url)
+
+    # 检查响应状态码
+    if response.status_code == 200:
+        # 解析JSON响应
+        data = response.json()
+        
+        # 提取lng和lat的值
+        if data['status'] == 0:
+            lng = data["locations"][0]["lng"]
+            lat = data["locations"][0]["lat"]
+            return f"{lat},{lng}"
+        
+    return origin_cood
+
+# 查看距离和剩余时间
+def from_destination():
+    if len(location) > 0 and len(destination) > 0:
+        # 定义请求的URL
+        url = f"https://apis.map.qq.com/ws/direction/v1/driving/?from={location}&to={destination}&output=json&key=4C7BZ-OMMKT-CN7XP-VQOGV-U7CFO-I7F5B"
+
+        # 发送GET请求
+        response = requests.get(url)
+
+        # 检查响应状态码
+        if response.status_code == 200:
+            # 解析JSON响应
+            data = response.json()
+            
+            # 提取distance和duration的值
+            if data['status'] == 0:
+                distance = data["result"]["routes"][0]["distance"]
+                duration = data["result"]["routes"][0]["duration"]
+
+                return (distance, duration)
+        
+    # 否则返回0
+    return (0, 0)
+    
 class MyHandler(http.server.SimpleHTTPRequestHandler):
     def do_GET(self):
         if self.path == "/location":
             self.send_response(302)
-            self.send_header("Location", current_location)
+
+            # 拼接URL模板
+            marker_template = "coord:{};title:夏维英;addr:{}"
+            marker = marker_template.format(location, location_name)
+            
+            url_template = "https://apis.map.qq.com/tools/poimarker?type=0&marker={}&key=4C7BZ-OMMKT-CN7XP-VQOGV-U7CFO-I7F5B&referer=myapp"
+            self.send_header("Location", url_template.format(marker))
             self.end_headers()
 
     def do_POST(self):
@@ -91,24 +153,6 @@ def double_click(element):
 # 聊天记录界面的图片按钮              Name: '图片与视频'     ControlType: TabItemControl      depth: 6
 # 聊天记录复制图片按钮               Name: '复制'   ControlType: MenuItemControl      depth: 5
 
-def translate_location(latitude, longitude):
-    url = "https://apis.map.qq.com/ws/coord/v1/translate?key=4C7BZ-OMMKT-CN7XP-VQOGV-U7CFO-I7F5B&locations={},{}&type=1".format(latitude, longitude)
-    # 发送GET请求
-    response = requests.get(url)
-
-    # 检查响应状态码
-    if response.status_code == 200:
-        # 解析JSON响应
-        data = response.json()
-        
-        # 提取lng和lat的值
-        if data['status'] == 0:
-            lng = data["locations"][0]["lng"]
-            lat = data["locations"][0]["lat"]
-            return "{},{}".format(lat, lng)
-        
-    return "{},{}".format(latitude, longitude)
-    
 class WeChat:
     def __init__(self, path):
         # 微信打开路径
@@ -145,21 +189,19 @@ class WeChat:
             address = response_data.get("data", {}).get("address")
 
             if address:
-                # 拼接URL模板
-                marker_template = "coord:{};title:{};addr:{}"
                 latitude = response_data.get("data", {}).get("latitude")
                 longitude = response_data.get("data", {}).get("longitude")
-                title = "夏维英"
-                marker = quote(marker_template.format(translate_location(latitude, longitude), title, address))
-                api_key = quote("4C7BZ-OMMKT-CN7XP-VQOGV-U7CFO-I7F5B")
                 
-                url_template = "https://apis.map.qq.com/tools/poimarker?type=0&marker={}&key={}&referer=myapp"
+                global location, location_name
+                location = translate_location(f"{latitude},{longitude}")
+                location_name = address
 
-                # 使用format方法将参数填入模板
-                global current_location
-                current_location= url_template.format(marker, api_key)
+                dest_reply = ''
+                dest_distance, dest_duration = from_destination()
+                if dest_duration > 0:
+                    dest_reply = f"距离{destination_name}还有{dest_distance//1000}公里，大约需要{minutes_to_hours_and_minutes(dest_duration)}，"
 
-                return f"我在【{address}】，具体是：http://x.hupai.vip:8080/location"
+                return f"我在【{address}】，{dest_reply}具体位置是：http://x.hupai.vip:8080/location"
             
         return "我在火星，别来烦我"
 
@@ -316,11 +358,8 @@ class WeChat:
         self.press_enter()
 
     def direct_reply(self, text):
-        print(text)
         pyperclip.copy(text)
-        time.sleep(0.5)
         auto.SendKeys("{Ctrl}v")
-        time.sleep(0.5)
         self.press_enter()
 
     # 识别聊天内容的类型
@@ -506,29 +545,23 @@ if __name__ == '__main__':
     # wechat.send_msg(name, text)
     # wechat.send_file(name, file)
     print('开始使用微信')
-    latest_message = ''
     while True:
         dialogs = wechat.get_current_contents()
         if len(dialogs) > 0:
-            if dialogs[0][2] != latest_message:
-                print('收到新消息')
                 latest_message = dialogs[0][2]
                 for msg in dialogs:
                     if msg[0] == '用户发送' and msg[1] == '夏维英' and '我在' in msg[2]:
-                        print('位置已发送')
                         break
                     elif msg[0] == '用户发送' and msg[1] != '夏维英' and '妈' in msg[2] and '哪' in msg[2]:
                         print('请求位置')
                         wechat.direct_reply(wechat.get_location())
                         break
 
-            else:
-                print('消息没变化')
         try:
             item = my_queue.get_nowait()
             wechat.direct_reply(item)
         except queue.Empty:
-            print("队列为空，无法获取元素。")
+            print("没有需要发送的消息")
         time.sleep(1)
     
     # contacts = wechat.find_all_contacts()
