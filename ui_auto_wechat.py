@@ -79,14 +79,17 @@ def get_location():
             global location, location_name
             location = translate_location(f"{latitude},{longitude}")
             location_name = address
+            away_home = get_distance(home, location)
+            away_dest = get_distance(destination, location)
+            logger.info(f"距离家：{away_home}公里，目的地{away_dest}公里")
 
             # 判断是不是旅行模式
-            if travel_phase == 0 and get_distance(home, location) > 5:
+            if travel_phase == 0 and away_home > 5:
                 travel_phase = 1
                 move_reply = "已经出发，"
 
             # 是否到达目的地
-            if travel_phase == 1 and get_distance(destination, location) < 0.5:
+            if travel_phase == 1 and away_dest < 0.5:
                 travel_phase = 2
                 move_reply = "已经到达目的地，"
 
