@@ -422,6 +422,8 @@ class WeChat:
             pyperclip.copy(text)
             auto.SendKeys("{Ctrl}v")
             self.press_enter()
+        else:
+            logger.info(f"微信未打开，模拟消息{text}")
 
     # 识别聊天内容的类型
     # 0：用户发送    1：时间信息  2：红包信息  3：”查看更多消息“标志 4：撤回消息
@@ -641,10 +643,10 @@ if __name__ == '__main__':
 
             if len(location_desc) > 0:
                 last_check_time = time.time()
-                logger.info(location_desc)
+                logger.info(f"获取位置，阶段为{travel_phase}：{location_desc}")
                 
                 # 出发或者到达消息，需要发送
-                if "出发" in location_desc or "到达" in location_desc:
+                if not(should_reply) and ("出发" in location_desc or "到达" in location_desc):
                     should_reply = True
                 # 旅行模式下，每隔30分钟，或距离目的地小于5公里就汇报
                 elif travel_phase == 1 and (time.time() - last_report_time > 30 * 60 or get_distance(destination, location) < 5):
@@ -657,6 +659,8 @@ if __name__ == '__main__':
                     last_report_time = time.time()
                     last_address_name = location_name
                     wechat.direct_reply(location_desc)
+            else:
+                logger.info("获取位置失败")
 
         time.sleep(1)
     
