@@ -1,0 +1,10 @@
+2023-10-29 13:10:18,231 - urllib3.connectionpool - DEBUG - Starting new HTTP connection (1): x.hupai.vip:9999
+2023-10-29 13:10:18,418 - urllib3.connectionpool - DEBUG - http://x.hupai.vip:9999 "POST /location/query HTTP/1.1" 200 233
+2023-10-29 13:10:18,422 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): apis.map.qq.com:443
+2023-10-29 13:10:18,530 - urllib3.connectionpool - DEBUG - https://apis.map.qq.com:443 "GET /ws/coord/v1/translate?key=4C7BZ-OMMKT-CN7XP-VQOGV-U7CFO-I7F5B&locations=31.827573,117.15932&type=1 HTTP/1.1" 200 155
+2023-10-29 13:10:18,537 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): apis.map.qq.com:443
+2023-10-29 13:10:19,018 - urllib3.connectionpool - DEBUG - https://apis.map.qq.com:443 "GET /ws/direction/v1/driving/?from=31.82568,117.164898&to=30.298782,120.183518&output=json&key=4C7BZ-OMMKT-CN7XP-VQOGV-U7CFO-I7F5B HTTP/1.1" 200 7640
+2023-10-29 13:10:33,086 - __main__ - INFO - 收到Get请求
+2023-10-29 13:10:33,099 - __main__ - INFO - 发送完Get请求
+2023-10-29 13:10:46,196 - __main__ - INFO - 收到Get请求
+2023-10-29 13:10:46,197 - __main__ - INFO - 发送完Get请求

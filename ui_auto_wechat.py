@@ -10,6 +10,7 @@ import http.server
 import socketserver
 import threading
 import queue
+import logging
 
 from PIL import ImageGrab
 from clipboard import setClipboardFiles
@@ -24,6 +25,19 @@ location_name = ''
 destination = '30.298782,120.183518'
 destination_name = '朗诗乐府'
 my_queue = queue.Queue()
+
+# 配置日志
+logging.basicConfig(
+    level=logging.DEBUG,  # 设置日志级别
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',  # 时间戳格式
+    handlers=[
+        logging.FileHandler('my.log'),  # 将日志输出到文件
+        logging.StreamHandler()  # 将日志输出到控制台
+    ]
+)
+
+# 创建一个日志记录器
+logger = logging.getLogger(__name__)
 
 def minutes_to_hours_and_minutes(total_minutes):
     if total_minutes < 0:
@@ -80,6 +94,7 @@ def from_destination():
     
 class MyHandler(http.server.SimpleHTTPRequestHandler):
     def do_GET(self):
+        logger.info("收到Get请求")
         if self.path == "/location":
             self.send_response(302)
 
@@ -90,6 +105,7 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
             url = f"https://apis.map.qq.com/tools/poimarker?type=0&marker={quote(marker)}&key={quote('4C7BZ-OMMKT-CN7XP-VQOGV-U7CFO-I7F5B')}&referer=myapp"
             self.send_header("Location", url)
             self.end_headers()
+            logger.info("发送完Get请求")
 
     def do_POST(self):
         content_length = int(self.headers["Content-Length"])
