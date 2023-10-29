@@ -20,4 +20,4 @@ ControlType: PaneControl    ClassName: #32769    AutomationId:     Rect: (0,0,25
 2023-10-27 21:25:41.766 ui_auto_wechat.py[314] get_current_contents -> Find Control Timeout(10s): {Name: '消息', ControlType: ListControl}
 2023-10-27 21:37:34.127 ui_auto_wechat.py[314] get_current_contents -> Find Control Timeout(10s): {Depth: 11, Name: '消息', ControlType: ListControl}
 2023-10-27 21:37:54.507 ui_auto_wechat.py[314] get_current_contents -> Find Control Timeout(10s): {Depth: 10, Name: '消息', ControlType: ListControl}
-2023-10-28 12:09:30.763 ui_auto_wechat.py[405] get_current_contents -> 
+2023-10-28 12:09:30.763 ui_auto_wechat.py[405] get_current_contents -> 2023-10-29 16:55:37.286 ui_auto_wechat.py[517] get_current_contents -> 2023-10-29 16:58:28.188 ui_auto_wechat.py[519] get_current_contents -> 

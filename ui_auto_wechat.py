@@ -11,6 +11,7 @@ import socketserver
 import threading
 import queue
 import logging
+import configparser
 
 from PIL import ImageGrab
 from clipboard import setClipboardFiles
@@ -19,10 +20,14 @@ from PyQt5.QtCore import QMimeData, QUrl
 from typing import List
 from urllib.parse import quote
 from urllib.parse import parse_qs
+from geopy.distance import distance
 
+config = configparser.ConfigParser()
+config.read('config.ini')
 location = ''
 location_name = ''
 destination = '30.298782,120.183518'
+home = '31.82568,117.164898'
 destination_name = '朗诗乐府'
 my_queue = queue.Queue()
 
@@ -38,6 +43,80 @@ logging.basicConfig(
 
 # 创建一个日志记录器
 logger = logging.getLogger(__name__)
+
+
+# 0在家；1在路上；2到达目的地
+travel_phase = 0
+# 获取当前位置
+def get_location():
+    global travel_phase
+    # 定义请求的URL和请求体数据
+    url = "http://x.hupai.vip:9999/location/query"
+    data = {
+        "data": {},
+        "timestamp": 1652590258638,
+        "sign": ""
+    }
+
+    # 发送POST请求
+    response = requests.post(url, json=data)
+
+    # 检查响应状态码是否为200
+    if response.status_code == 200:
+        # 解析响应的JSON数据
+        response_data = response.json()
+
+        # 获取address字段
+        address = response_data.get("data", {}).get("address")
+
+        if address:
+            move_reply = ''
+            dest_reply = ''
+
+            latitude = response_data.get("data", {}).get("latitude")
+            longitude = response_data.get("data", {}).get("longitude")
+            
+            global location, location_name
+            location = translate_location(f"{latitude},{longitude}")
+            location_name = address
+
+            # 判断是不是旅行模式
+            if travel_phase == 0 and get_distance(home, location) > 5:
+                travel_phase = 1
+                move_reply = "已经出发，"
+
+            # 是否到达目的地
+            if travel_phase == 1 and get_distance(destination, location) < 0.5:
+                travel_phase = 2
+                move_reply = "已经到达目的地，"
+
+            if travel_phase == 1:
+                dest_distance, dest_duration = from_destination()
+                if dest_duration > 0:
+                    dest_reply = f"距离{destination_name}还有{dest_distance//1000}公里，大约需要{minutes_to_hours_and_minutes(dest_duration)}，"
+
+            return f"{move_reply}我在【{address}】，{dest_reply}具体位置是：http://x.hupai.vip:8080/location"
+        
+    return ""
+
+
+def get_distance(lat_lng1, lat_lng2):
+    """
+    计算两个经纬度之间的距离
+    :param lat_lng1: 第一个经纬度
+    :param lat_lng2: 第二个经纬度
+    :return: 两个经纬度之间的距离（单位：公里）
+    """
+    # 将经纬度字符串转换为元组
+    lat_lng1 = tuple(map(float, lat_lng1.split(',')))
+    lat_lng2 = tuple(map(float, lat_lng2.split(',')))
+
+    # 计算距离
+    dist = distance(lat_lng1, lat_lng2).km
+
+    # 输出距离
+    return dist
+
 
 def minutes_to_hours_and_minutes(total_minutes):
     if total_minutes < 0:
@@ -170,9 +249,12 @@ def double_click(element):
 # 聊天记录复制图片按钮               Name: '复制'   ControlType: MenuItemControl      depth: 5
 
 class WeChat:
-    def __init__(self, path):
+    def __init__(self, path, opened):
         # 微信打开路径
         self.path = path
+
+        # 是否打开微信
+        self.opened = opened
         
         # 用于复制内容到剪切板
         self.app = QApplication([])
@@ -182,44 +264,6 @@ class WeChat:
         
         # 自动回复的内容
         self.auto_reply_msg = "[自动回复]您好，我现在正在忙，稍后会主动联系您，感谢理解。"
-        
-
-    def get_location(self):
-        # 定义请求的URL和请求体数据
-        url = "http://x.hupai.vip:9999/location/query"
-        data = {
-            "data": {},
-            "timestamp": 1652590258638,
-            "sign": ""
-        }
-
-        # 发送POST请求
-        response = requests.post(url, json=data)
-
-        # 检查响应状态码是否为200
-        if response.status_code == 200:
-            # 解析响应的JSON数据
-            response_data = response.json()
-
-            # 获取address字段
-            address = response_data.get("data", {}).get("address")
-
-            if address:
-                latitude = response_data.get("data", {}).get("latitude")
-                longitude = response_data.get("data", {}).get("longitude")
-                
-                global location, location_name
-                location = translate_location(f"{latitude},{longitude}")
-                location_name = address
-
-                dest_reply = ''
-                dest_distance, dest_duration = from_destination()
-                if dest_duration > 0:
-                    dest_reply = f"距离{destination_name}还有{dest_distance//1000}公里，大约需要{minutes_to_hours_and_minutes(dest_duration)}，"
-
-                return f"我在【{address}】，{dest_reply}具体位置是：http://x.hupai.vip:8080/location"
-            
-        return "我在火星，别来烦我"
 
     # 打开微信客户端
     def open_wechat(self):
@@ -374,9 +418,10 @@ class WeChat:
         self.press_enter()
 
     def direct_reply(self, text):
-        pyperclip.copy(text)
-        auto.SendKeys("{Ctrl}v")
-        self.press_enter()
+        if self.opened:
+            pyperclip.copy(text)
+            auto.SendKeys("{Ctrl}v")
+            self.press_enter()
 
     # 识别聊天内容的类型
     # 0：用户发送    1：时间信息  2：红包信息  3：”查看更多消息“标志 4：撤回消息
@@ -479,21 +524,24 @@ class WeChat:
     # 获取当前聊天窗口的聊天记录
     def get_current_contents(self) -> List:
         try:
-            list_control = auto.ListControl(Depth=12, Name="消息")
-            
-            dialogs = []
-            value_to_info = {0: '用户发送', 1: '时间信息', 2: '红包信息', 3: '"查看更多消息"标志', 4: '撤回消息', 5: '新消息分割', 6: '邀请进群', 7: '其他'}
+            if self.opened:
+                list_control = auto.ListControl(Depth=12, Name="消息")
+                
+                dialogs = []
+                value_to_info = {0: '用户发送', 1: '时间信息', 2: '红包信息', 3: '"查看更多消息"标志', 4: '撤回消息', 5: '新消息分割', 6: '邀请进群', 7: '其他'}
 
-            for list_item_control in list_control.GetChildren()[::-1]:
-                v = self._detect_type(list_item_control)
-                msg = list_item_control.Name
-                name = list_item_control.ButtonControl().Name if v == 0 else ''
-                
-                dialogs.append((value_to_info[v], name, msg))
-                
-            return dialogs
+                for list_item_control in list_control.GetChildren()[::-1]:
+                    v = self._detect_type(list_item_control)
+                    msg = list_item_control.Name
+                    name = list_item_control.ButtonControl().Name if v == 0 else ''
+                    
+                    dialogs.append((value_to_info[v], name, msg))
+                    
+                return dialogs
         except:
-            return []
+            pass
+
+        return []
             
     # 获取指定聊天窗口的聊天记录
     def get_dialogs(self, name: str, n_msg: int) -> List:
@@ -550,15 +598,13 @@ def start_http_server():
 
 if __name__ == '__main__':
     wechat_path = "C:\Program Files\Tencent\WeChat\WeChat.exe"
-    wechat = WeChat(wechat_path)
-    
-    # 监听消息
+    wechat = WeChat(wechat_path, config.get('Common', 'env') != 'local')
         
     # 创建并启动HTTP服务器线程
     http_server_thread = threading.Thread(target=start_http_server)
     http_server_thread.start()
 
-    # print(wechat.get_location())
+    # print()
     # time.sleep(1000)
 
     # name = "文件传输助手"
@@ -567,24 +613,51 @@ if __name__ == '__main__':
     
     # wechat.send_msg(name, text)
     # wechat.send_file(name, file)
-    print('开始使用微信')
+    last_check_time = 0
+    last_address_name = ''
+    last_report_time = 0
+
     while True:
+        should_reply = False
         dialogs = wechat.get_current_contents()
         if len(dialogs) > 0:
-                latest_message = dialogs[0][2]
                 for msg in dialogs:
                     if msg[0] == '用户发送' and '我在' in msg[2]:
                         break
                     elif msg[0] == '用户发送' and '妈' in msg[2] and '哪' in msg[2]:
                         logger.info('请求位置')
-                        wechat.direct_reply(wechat.get_location())
+                        should_reply = True
                         break
 
         try:
             item = my_queue.get_nowait()
             wechat.direct_reply(item)
         except queue.Empty:
-            logger.info("没有需要发送的消息")
+            pass
+
+        # 每隔5分钟检查一下位置
+        if should_reply or time.time() - last_check_time > 5 * 60:
+            location_desc = get_location()
+
+            if len(location_desc) > 0:
+                last_check_time = time.time()
+                logger.info(location_desc)
+                
+                # 出发或者到达消息，需要发送
+                if "出发" in location_desc or "到达" in location_desc:
+                    should_reply = True
+                # 旅行模式下，每隔30分钟，或距离目的地小于5公里就汇报
+                elif travel_phase == 1 and (time.time() - last_report_time > 30 * 60 or get_distance(destination, location) < 5):
+                    should_reply = True
+                # 非旅行模式下，变更了地址就汇报
+                elif travel_phase != 1 and last_address_name != location_name:
+                    should_reply = True
+
+                if should_reply:
+                    last_report_time = time.time()
+                    last_address_name = location_name
+                    wechat.direct_reply(location_desc)
+
         time.sleep(1)
     
     # contacts = wechat.find_all_contacts()
