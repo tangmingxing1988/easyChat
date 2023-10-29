@@ -28,7 +28,7 @@ my_queue = queue.Queue()
 
 # 配置日志
 logging.basicConfig(
-    level=logging.DEBUG,  # 设置日志级别
+    level=logging.INFO,  # 设置日志级别
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',  # 时间戳格式
     handlers=[
         logging.FileHandler('my.log'),  # 将日志输出到文件
@@ -573,7 +573,7 @@ if __name__ == '__main__':
                     if msg[0] == '用户发送' and msg[1] == '夏维英' and '我在' in msg[2]:
                         break
                     elif msg[0] == '用户发送' and msg[1] != '夏维英' and '妈' in msg[2] and '哪' in msg[2]:
-                        print('请求位置')
+                        logger.info('请求位置')
                         wechat.direct_reply(wechat.get_location())
                         break
 
@@ -581,7 +581,7 @@ if __name__ == '__main__':
             item = my_queue.get_nowait()
             wechat.direct_reply(item)
         except queue.Empty:
-            print("没有需要发送的消息")
+            logger.info("没有需要发送的消息")
         time.sleep(1)
     
     # contacts = wechat.find_all_contacts()
