@@ -478,19 +478,22 @@ class WeChat:
 
     # 获取当前聊天窗口的聊天记录
     def get_current_contents(self) -> List:
-        list_control = auto.ListControl(Depth=12, Name="消息")
-        
-        dialogs = []
-        value_to_info = {0: '用户发送', 1: '时间信息', 2: '红包信息', 3: '"查看更多消息"标志', 4: '撤回消息', 5: '新消息分割', 6: '邀请进群', 7: '其他'}
+        try:
+            list_control = auto.ListControl(Depth=12, Name="消息")
+            
+            dialogs = []
+            value_to_info = {0: '用户发送', 1: '时间信息', 2: '红包信息', 3: '"查看更多消息"标志', 4: '撤回消息', 5: '新消息分割', 6: '邀请进群', 7: '其他'}
 
-        for list_item_control in list_control.GetChildren()[::-1]:
-            v = self._detect_type(list_item_control)
-            msg = list_item_control.Name
-            name = list_item_control.ButtonControl().Name if v == 0 else ''
-            
-            dialogs.append((value_to_info[v], name, msg))
-            
-        return dialogs
+            for list_item_control in list_control.GetChildren()[::-1]:
+                v = self._detect_type(list_item_control)
+                msg = list_item_control.Name
+                name = list_item_control.ButtonControl().Name if v == 0 else ''
+                
+                dialogs.append((value_to_info[v], name, msg))
+                
+            return dialogs
+        except:
+            return []
             
     # 获取指定聊天窗口的聊天记录
     def get_dialogs(self, name: str, n_msg: int) -> List:
@@ -570,9 +573,9 @@ if __name__ == '__main__':
         if len(dialogs) > 0:
                 latest_message = dialogs[0][2]
                 for msg in dialogs:
-                    if msg[0] == '用户发送' and msg[1] == '夏维英' and '我在' in msg[2]:
+                    if msg[0] == '用户发送' and '我在' in msg[2]:
                         break
-                    elif msg[0] == '用户发送' and msg[1] != '夏维英' and '妈' in msg[2] and '哪' in msg[2]:
+                    elif msg[0] == '用户发送' and '妈' in msg[2] and '哪' in msg[2]:
                         logger.info('请求位置')
                         wechat.direct_reply(wechat.get_location())
                         break
